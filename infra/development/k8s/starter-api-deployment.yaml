@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: starter-api
+  namespace: fastapi-starter
+  labels:
+    app: starter-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: starter-api
+  template:
+    metadata:
+      labels:
+        app: starter-api
+    spec:
+      containers:
+        - name: starter-api
+          image: fastapi-starter/starter-api
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ENVIRONMENT
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: uri
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: jwt_secret
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: CORS_ORIGINS
+            - name: API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: API_HOST
+            - name: API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: API_PORT
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: starter-api
+  namespace: fastapi-starter
+spec:
+  selector:
+    app: starter-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
